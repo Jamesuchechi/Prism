@@ -1,0 +1,45 @@
+:root {
+  /* Colors */
+  --c-bg: #0a0a08;
+  --c-surface: #111110;
+  --c-border: #222220;
+  --c-border-light: #2e2e2b;
+  --c-text: #e8e4dc;
+  --c-text-muted: #6b6860;
+  --c-text-dim: #3d3c39;
+  --c-accent: #c8a96e;
+  --c-accent-dim: rgba(200, 169, 110, 0.12);
+  --c-accent-glow: rgba(200, 169, 110, 0.06);
+
+  /* Stage colors */
+  --c-refract: #7eb8c9;
+  --c-refract-dim: rgba(126, 184, 201, 0.08);
+  --c-distill: #a89fc8;
+  --c-distill-dim: rgba(168, 159, 200, 0.08);
+  --c-crystallize: #c8a96e;
+  --c-crystallize-dim: rgba(200, 169, 110, 0.08);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout */
+  --max-w: 720px;
+  --radius: 2px;
+}
