@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { domToPng } from 'modern-screenshot'
+import { useSoundEffects } from '../hooks/useSoundEffects'
+import { useShare } from '../hooks/useShare'
 
 function buildCopyText({ input, perspectives, signal, brief }) {
   const lines = []
@@ -25,14 +28,69 @@ function buildCopyText({ input, perspectives, signal, brief }) {
   return lines.join('\n')
 }
 
-export default function OutputCard({ input, perspectives, signal, brief, onReset }) {
+export default function OutputCard({ input, perspectives, signal, brief, onReset, onRemix }) {
   const [copied, setCopied] = useState(false)
+  const [shared, setShared] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  
+  const { playClick, playSuccess } = useSoundEffects()
+  const { encodeState } = useShare()
 
   const handleCopy = async () => {
+    playClick()
     const text = buildCopyText({ input, perspectives, signal, brief })
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleShareLink = async () => {
+    playClick()
+    const url = encodeState({ input, perspectives, signal, brief })
+    if (url) {
+      await navigator.clipboard.writeText(url)
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
+    }
+  }
+
+  const handleExportPng = async () => {
+    const el = document.getElementById('prism-results')
+    if (!el) return
+
+    setExporting(true)
+    playClick()
+    
+    try {
+      const dataUrl = await domToPng(el, {
+        scale: 2,
+        backgroundColor: '#0a0a08',
+        style: {
+          padding: '40px',
+          borderRadius: '0'
+        }
+      })
+      
+      const link = document.createElement('a')
+      link.download = `prism-${input.slice(0, 20).toLowerCase().replace(/\s+/g, '-')}.png`
+      link.href = dataUrl
+      link.click()
+      playSuccess()
+    } catch (err) {
+      console.error('PRISM: Export failed', err)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleReset = () => {
+    playClick()
+    onReset()
+  }
+
+  const handleRemix = () => {
+    playClick()
+    onRemix(signal)
   }
 
   return (
@@ -47,11 +105,28 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
         <span>PRISM complete</span>
       </div>
 
-      <div className="action-btns">
+      <div className="action-btns-grid">
         <button className="action-btn copy-btn" onClick={handleCopy}>
-          {copied ? '✓ Copied' : 'Copy output'}
+          {copied ? '✓ Copied' : 'Copy Text'}
         </button>
-        <button className="action-btn reset-btn" onClick={onReset}>
+        
+        <button className="action-btn share-btn" onClick={handleShareLink}>
+          {shared ? '✓ Link Copied' : 'Share Link'}
+        </button>
+
+        <button 
+          className="action-btn export-btn" 
+          onClick={handleExportPng}
+          disabled={exporting}
+        >
+          {exporting ? 'Preparing...' : 'Export PNG'}
+        </button>
+
+        <button className="action-btn remix-btn" onClick={handleRemix}>
+          Remix Signal
+        </button>
+
+        <button className="action-btn reset-btn" onClick={handleReset}>
           New input →
         </button>
       </div>
@@ -88,10 +163,16 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
           flex-shrink: 0;
         }
 
-        .action-btns {
+        .action-btns-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(2, 1fr);
           gap: var(--space-3);
+        }
+
+        @media (max-width: 480px) {
+          .action-btns-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         .action-btn {
@@ -104,18 +185,31 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
           cursor: pointer;
           transition: all 0.2s ease;
           text-transform: uppercase;
-        }
-
-        .copy-btn {
-          background: transparent;
           border: 1px solid var(--c-border-light);
+          background: transparent;
           color: var(--c-text-muted);
+          min-height: 52px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .copy-btn:hover {
+        @media (max-width: 600px) {
+          .action-btn {
+            padding: var(--space-3) var(--space-4);
+            font-size: 0.65rem;
+          }
+        }
+
+        .action-btn:hover:not(:disabled) {
           border-color: var(--c-accent);
           color: var(--c-accent);
           background: var(--c-accent-dim);
+        }
+
+        .action-btn:disabled {
+          opacity: 0.5;
+          cursor: wait;
         }
 
         .reset-btn {

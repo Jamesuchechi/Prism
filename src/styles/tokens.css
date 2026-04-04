@@ -1,29 +1,8 @@
 :root {
-  /* Colors */
-  --c-bg: #0a0a08;
-  --c-surface: #111110;
-  --c-border: #222220;
-  --c-border-light: #2e2e2b;
-  --c-text: #e8e4dc;
-  --c-text-muted: #6b6860;
-  --c-text-dim: #3d3c39;
-  --c-accent: #c8a96e;
-  --c-accent-dim: rgba(200, 169, 110, 0.12);
-  --c-accent-glow: rgba(200, 169, 110, 0.06);
-
-  /* Stage colors */
-  --c-refract: #7eb8c9;
-  --c-refract-dim: rgba(126, 184, 201, 0.08);
-  --c-distill: #a89fc8;
-  --c-distill-dim: rgba(168, 159, 200, 0.08);
-  --c-crystallize: #c8a96e;
-  --c-crystallize-dim: rgba(200, 169, 110, 0.08);
-
-  /* Typography */
+  /* Layout & Shared */
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
-  /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -35,11 +14,59 @@
   --space-9: 96px;
   --space-10: 128px;
 
-  /* Easing */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Layout */
   --max-w: 720px;
   --radius: 2px;
+  --bp-tablet: 768px;
+  --bp-mobile: 600px;
+}
+
+/* Theme Obsidian (Dark) */
+.theme-dark {
+  --c-bg: #0a0a08;
+  --c-surface: #111110;
+  --c-border: #222220;
+  --c-border-light: #2e2e2b;
+  --c-text: #e8e4dc;
+  --c-text-muted: #6b6860;
+  --c-text-dim: #3d3c39;
+  --c-accent: #c8a96e;
+  --c-accent-dim: rgba(200, 169, 110, 0.12);
+  --c-accent-glow: rgba(200, 169, 110, 0.06);
+  --c-glass-bg: rgba(10, 10, 8, 0.85);
+  --c-shadow: rgba(0, 0, 0, 0.4);
+  --c-swatch-border: rgba(255, 255, 255, 0.06);
+
+  --c-refract: #7eb8c9;
+  --c-refract-dim: rgba(126, 184, 201, 0.08);
+  --c-distill: #a89fc8;
+  --c-distill-dim: rgba(168, 159, 200, 0.08);
+  --c-crystallize: #c8a96e;
+  --c-crystallize-dim: rgba(200, 169, 110, 0.08);
+}
+
+/* Theme Paper (Light) */
+.theme-light {
+  --c-bg: #f7f5f3;
+  --c-surface: #ffffff;
+  --c-border: #e5e2db;
+  --c-border-light: #d8d4cd;
+  --c-text: #1a1a18;
+  --c-text-muted: #7a7770;
+  --c-text-dim: #a5a29a;
+  --c-accent: #8f6d3e;
+  --c-accent-dim: rgba(143, 109, 62, 0.08);
+  --c-accent-glow: rgba(143, 109, 62, 0.04);
+  --c-glass-bg: rgba(247, 245, 243, 0.85);
+  --c-shadow: rgba(26, 26, 24, 0.08);
+  --c-swatch-border: rgba(0, 0, 0, 0.06);
+
+  --c-refract: #568b9a;
+  --c-refract-dim: rgba(86, 139, 154, 0.06);
+  --c-distill: #7a6e9a;
+  --c-distill-dim: rgba(122, 110, 154, 0.06);
+  --c-crystallize: #8f6d3e;
+  --c-crystallize-dim: rgba(143, 109, 62, 0.06);
 }

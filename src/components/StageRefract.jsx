@@ -40,9 +40,23 @@ export default function StageRefract({ input, perspectives, isLoading }) {
           <motion.div
             key={p.lens}
             className="perspective-card"
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.12, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, x: -16, scale: 0.98 }}
+            animate={{ 
+              opacity: 1, 
+              x: 0, 
+              scale: 1,
+              boxShadow: [
+                '0 0 0px rgba(0,0,0,0)',
+                `0 0 20px ${LENS_COLORS[p.lens]}11`,
+                '0 0 0px rgba(0,0,0,0)'
+              ]
+            }}
+            transition={{ 
+              delay: i * 0.15, 
+              duration: 0.8, 
+              ease: [0.16, 1, 0.3, 1],
+              boxShadow: { delay: i * 0.15 + 0.2, duration: 1.5 }
+            }}
           >
             <span
               className="lens-name"
@@ -69,6 +83,12 @@ export default function StageRefract({ input, perspectives, isLoading }) {
           margin-bottom: var(--space-6);
         }
 
+        @media (max-width: 600px) {
+          .stage-header {
+            margin-bottom: var(--space-4);
+          }
+        }
+
         .stage-label {
           font-family: var(--font-mono);
           font-size: 0.65rem;
@@ -86,6 +106,12 @@ export default function StageRefract({ input, perspectives, isLoading }) {
           line-height: 1.4;
         }
 
+        @media (max-width: 600px) {
+          .stage-input-echo {
+            font-size: 1rem;
+          }
+        }
+
         .perspectives {
           display: flex;
           flex-direction: column;
@@ -100,6 +126,13 @@ export default function StageRefract({ input, perspectives, isLoading }) {
           display: flex;
           flex-direction: column;
           gap: var(--space-3);
+        }
+
+        @media (max-width: 600px) {
+          .perspective-card {
+            padding: var(--space-4);
+            gap: var(--space-2);
+          }
         }
 
         .perspective-card.skeleton {
@@ -121,6 +154,13 @@ export default function StageRefract({ input, perspectives, isLoading }) {
           font-weight: 300;
           line-height: 1.7;
           color: var(--c-text);
+        }
+
+        @media (max-width: 600px) {
+          .lens-text {
+            font-size: 1rem;
+            line-height: 1.6;
+          }
         }
       `}</style>
     </div>

@@ -1,6 +1,36 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useSoundEffects } from '../hooks/useSoundEffects'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.2
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+  }
+}
 
 export default function StageCrystallize({ brief, isLoading }) {
+  const { playSuccess } = useSoundEffects()
+
+  useEffect(() => {
+    if (brief) {
+      playSuccess()
+    }
+  }, [brief, playSuccess])
+
   return (
     <motion.div
       className="stage stage-crystallize"
@@ -28,28 +58,18 @@ export default function StageCrystallize({ brief, isLoading }) {
       {brief && (
         <motion.div
           className="brief-grid"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
           {/* Concept */}
-          <motion.div
-            className="brief-row"
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.05, duration: 0.5 }}
-          >
+          <motion.div className="brief-row" variants={itemVariants}>
             <span className="brief-key">Concept</span>
             <p className="brief-value concept-value">{brief.concept}</p>
           </motion.div>
 
           {/* Tone */}
-          <motion.div
-            className="brief-row"
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15, duration: 0.5 }}
-          >
+          <motion.div className="brief-row" variants={itemVariants}>
             <span className="brief-key">Tone</span>
             <div className="tone-words">
               {brief.tone?.map((word, i) => (
@@ -59,21 +79,20 @@ export default function StageCrystallize({ brief, isLoading }) {
           </motion.div>
 
           {/* Palette */}
-          <motion.div
-            className="brief-row brief-row-palette"
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.25, duration: 0.5 }}
-          >
+          <motion.div className="brief-row brief-row-palette" variants={itemVariants}>
             <span className="brief-key">Palette</span>
             <div className="palette">
               {brief.palette?.map((swatch, i) => (
                 <div key={i} className="swatch-item">
-                  <div
-                    className="swatch"
-                    style={{ background: swatch.hex }}
-                    title={swatch.rationale}
-                  />
+                  <div className="swatch-wrap">
+                    <div
+                      className="swatch"
+                      style={{ background: swatch.hex }}
+                    />
+                    <div className="swatch-tooltip">
+                      {swatch.rationale}
+                    </div>
+                  </div>
                   <div className="swatch-info">
                     <span className="swatch-name">{swatch.name}</span>
                     <span className="swatch-hex">{swatch.hex}</span>
@@ -84,12 +103,7 @@ export default function StageCrystallize({ brief, isLoading }) {
           </motion.div>
 
           {/* Directions */}
-          <motion.div
-            className="brief-row"
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.35, duration: 0.5 }}
-          >
+          <motion.div className="brief-row" variants={itemVariants}>
             <span className="brief-key">Directions</span>
             <div className="directions">
               {brief.directions?.map((dir, i) => (
@@ -149,6 +163,14 @@ export default function StageCrystallize({ brief, isLoading }) {
           align-items: start;
         }
 
+        @media (max-width: 600px) {
+          .brief-row {
+            grid-template-columns: 1fr;
+            gap: var(--space-2);
+            padding: var(--space-4);
+          }
+        }
+
         .brief-row:last-child {
           border-bottom: none;
         }
@@ -162,6 +184,13 @@ export default function StageCrystallize({ brief, isLoading }) {
           padding-top: 3px;
         }
 
+        @media (max-width: 600px) {
+          .brief-key {
+            padding-top: 0;
+            font-size: 0.58rem;
+          }
+        }
+
         .brief-value {
           font-family: var(--font-display);
           font-size: 1rem;
@@ -173,6 +202,12 @@ export default function StageCrystallize({ brief, isLoading }) {
         .concept-value {
           font-size: 1.1rem;
           font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+          .concept-value {
+            font-size: 1.05rem;
+          }
         }
 
         .tone-words {
@@ -198,23 +233,66 @@ export default function StageCrystallize({ brief, isLoading }) {
           flex-wrap: wrap;
         }
 
+        @media (max-width: 600px) {
+          .palette {
+            gap: var(--space-4);
+          }
+        }
+
         .swatch-item {
           display: flex;
           flex-direction: column;
           gap: var(--space-2);
         }
 
+        .swatch-wrap {
+          position: relative;
+        }
+
         .swatch {
           width: 40px;
           height: 40px;
           border-radius: var(--radius);
-          border: 1px solid rgba(255,255,255,0.06);
+          border: 1px solid var(--c-swatch-border);
           cursor: pointer;
           transition: transform 0.15s ease;
         }
 
         .swatch:hover {
           transform: scale(1.1);
+        }
+
+        .swatch-tooltip {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 0;
+          width: 180px;
+          padding: var(--space-2) var(--space-3);
+          background: var(--c-surface);
+          border: 1px solid var(--c-border-light);
+          border-radius: var(--radius);
+          font-family: var(--font-mono);
+          font-size: 0.58rem;
+          line-height: 1.4;
+          color: var(--c-text-muted);
+          pointer-events: none;
+          opacity: 0;
+          transform: translateY(4px);
+          transition: all 0.2s ease;
+          z-index: 10;
+          box-shadow: 0 4px 12px var(--c-shadow);
+        }
+
+        @media (max-width: 600px) {
+          .swatch-tooltip {
+            width: 140px;
+            left: -10px;
+          }
+        }
+
+        .swatch-wrap:hover .swatch-tooltip {
+          opacity: 1;
+          transform: translateY(0);
         }
 
         .swatch-info {
@@ -262,6 +340,12 @@ export default function StageCrystallize({ brief, isLoading }) {
           font-weight: 300;
           line-height: 1.5;
           color: var(--c-text);
+        }
+
+        @media (max-width: 600px) {
+          .direction-text {
+            font-size: 0.95rem;
+          }
         }
       `}</style>
     </motion.div>

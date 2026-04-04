@@ -72,21 +72,25 @@ async function callWithFallback(provider, models, prompt) {
 }
 
 // Stage 1 — Refract
-export async function refract(input) {
+export async function refract(input, lenses) {
+  const lensInstructions = lenses && lenses.length === 5
+    ? `Reframe this through exactly these 5 lenses: ${lenses.map(l => `"${l}"`).join(', ')}.`
+    : `Reframe this through exactly 5 lenses. Be poetic, precise, and genuinely surprising. Avoid generic observations. Make each lens feel like a different world.`
+
   const prompt = `You are PRISM, a generative thinking tool. The user has given you this input:
 
 "${input}"
 
-Reframe this through exactly 5 lenses. For each lens, write 2–3 sentences. Be poetic, precise, and genuinely surprising. Avoid generic observations. Make each lens feel like a different world.
+${lensInstructions} For each lens, write 2–3 sentences. 
 
 Respond in JSON only — no preamble, no markdown, no explanation:
 {
   "perspectives": [
-    { "lens": "The Poet", "text": "..." },
-    { "lens": "The Scientist", "text": "..." },
-    { "lens": "The Child", "text": "..." },
-    { "lens": "The Critic", "text": "..." },
-    { "lens": "The Futurist", "text": "..." }
+    { "lens": "Lens Name 1", "text": "..." },
+    { "lens": "Lens Name 2", "text": "..." },
+    { "lens": "Lens Name 3", "text": "..." },
+    { "lens": "Lens Name 4", "text": "..." },
+    { "lens": "Lens Name 5", "text": "..." }
   ]
 }`
 

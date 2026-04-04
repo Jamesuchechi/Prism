@@ -1,6 +1,17 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import Typewriter from './Typewriter'
+import { useSoundEffects } from '../hooks/useSoundEffects'
 
 export default function StageDistill({ signal, isLoading }) {
+  const { playTransition } = useSoundEffects()
+
+  useEffect(() => {
+    if (signal) {
+      playTransition()
+    }
+  }, [signal, playTransition])
+
   return (
     <motion.div
       className="stage stage-distill"
@@ -27,14 +38,16 @@ export default function StageDistill({ signal, isLoading }) {
         )}
 
         {signal && (
-          <motion.p
-            className="signal-text"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {signal}
-          </motion.p>
+          <div className="signal-text">
+            <Typewriter text={signal} speed={0.03} />
+            <motion.span
+              className="cursor"
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+            >
+              _
+            </motion.span>
+          </div>
         )}
       </div>
 
@@ -69,6 +82,12 @@ export default function StageDistill({ signal, isLoading }) {
           align-items: center;
         }
 
+        @media (max-width: 600px) {
+          .signal-block {
+            padding: var(--space-4) var(--space-4);
+          }
+        }
+
         .signal-text {
           font-family: var(--font-display);
           font-size: 1.25rem;
@@ -76,6 +95,13 @@ export default function StageDistill({ signal, isLoading }) {
           line-height: 1.75;
           color: var(--c-text);
           font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+          .signal-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+          }
         }
 
         .signal-loading {
