@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" fill="#0a0a08"/>
+  <!-- Prism triangle -->
+  <polygon
+    points="256,80 440,400 72,400"
+    fill="none"
+    stroke="#c8a96e"
+    stroke-width="12"
+    stroke-linejoin="round"
+  />
+  <!-- Light refraction lines -->
+  <line x1="256" y1="400" x2="160" y2="480" stroke="#7eb8c9" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <line x1="256" y1="400" x2="220" y2="490" stroke="#a89fc8" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <line x1="256" y1="400" x2="256" y2="492" stroke="#c8a96e" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <line x1="256" y1="400" x2="292" y2="490" stroke="#9bc49b" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <line x1="256" y1="400" x2="352" y2="480" stroke="#c9967e" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <!-- Input ray -->
+  <line x1="256" y1="20" x2="256" y2="80" stroke="#c8a96e" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+</svg>

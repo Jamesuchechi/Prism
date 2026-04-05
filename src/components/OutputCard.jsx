@@ -1,8 +1,10 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { domToPng } from 'modern-screenshot'
 import { useSoundEffects } from '../hooks/useSoundEffects'
 import { useShare } from '../hooks/useShare'
+import { useSave } from '../hooks/useSave'
+import { useAuth } from '../context/AuthContext'
 
 function buildCopyText({ input, perspectives, signal, brief }) {
   const lines = []
@@ -28,13 +30,19 @@ function buildCopyText({ input, perspectives, signal, brief }) {
   return lines.join('\n')
 }
 
-export default function OutputCard({ input, perspectives, signal, brief, onReset, onRemix }) {
+export default function OutputCard({ input, perspectives, signal, brief, onReset, onRemix, onAuthRequired }) {
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
   const [exporting, setExporting] = useState(false)
   
   const { playClick, playSuccess } = useSoundEffects()
-  const { encodeState } = useShare()
+  const { share, sharing, shareUrl } = useShare()
+  const { save, saving, saved, savedId, error: saveError, reset: resetSave } = useSave()
+  const { user } = useAuth()
+
+  useEffect(() => {
+    resetSave()
+  }, [input, perspectives, signal, brief, resetSave])
 
   const handleCopy = async () => {
     playClick()
@@ -44,13 +52,36 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleSave = async () => {
+    playClick()
+    const res = await save({ input, perspectives, signal, brief })
+    if (res?.needsAuth) {
+      onAuthRequired('Sign in to save this PRISM to your library.')
+    } else if (res?.id) {
+      playSuccess()
+    }
+  }
+
   const handleShareLink = async () => {
     playClick()
-    const url = encodeState({ input, perspectives, signal, brief })
-    if (url) {
-      await navigator.clipboard.writeText(url)
-      setShared(true)
-      setTimeout(() => setShared(false), 2000)
+    
+    let currentId = savedId
+    if (!currentId) {
+      const res = await save({ input, perspectives, signal, brief })
+      if (res?.needsAuth) {
+        onAuthRequired('Sign in to share a permanent link for this PRISM.')
+        return
+      }
+      if (res?.id) currentId = res.id
+    }
+
+    if (currentId) {
+      const url = await share(currentId)
+      if (url) {
+        setShared(true)
+        setTimeout(() => setShared(false), 3000)
+        playSuccess()
+      }
     }
   }
 
@@ -110,8 +141,20 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
           {copied ? '✓ Copied' : 'Copy Text'}
         </button>
         
-        <button className="action-btn share-btn" onClick={handleShareLink}>
-          {shared ? '✓ Link Copied' : 'Share Link'}
+        <button 
+          className={`action-btn save-btn ${saved ? 'saved' : ''}`} 
+          onClick={handleSave}
+          disabled={saving || saved}
+        >
+          {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save to Library'}
+        </button>
+
+        <button 
+          className="action-btn share-btn" 
+          onClick={handleShareLink}
+          disabled={sharing}
+        >
+          {sharing ? 'Sharing...' : shared ? '✓ Link Copied' : 'Share Link'}
         </button>
 
         <button 
@@ -130,6 +173,20 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
           New input →
         </button>
       </div>
+
+      <AnimatePresence>
+        {saveError && (
+          <motion.p 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="save-error"
+          >
+            {saveError}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
 
       <style>{`
         .output-actions {
@@ -223,7 +280,24 @@ export default function OutputCard({ input, perspectives, signal, brief, onReset
           background: transparent;
           color: var(--c-accent);
         }
+
+        .save-btn.saved {
+          background: rgba(200, 169, 110, 0.1);
+          border-color: var(--c-accent);
+          color: var(--c-accent);
+          cursor: default;
+        }
+
+        .save-error {
+          font-family: var(--font-mono);
+          font-size: 0.65rem;
+          color: #c97e7e;
+          text-align: center;
+          margin-top: var(--space-2);
+          letter-spacing: 0.05em;
+        }
       `}</style>
+
     </motion.div>
   )
 }

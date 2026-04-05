@@ -1,41 +1,41 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePrism } from './hooks/usePrism'
-import { useShare } from './hooks/useShare'
 import { useTheme } from './hooks/useTheme'
+import { useAuth } from './context/AuthContext'
 import InputScreen from './components/InputScreen'
 import StageRefract from './components/StageRefract'
 import StageDistill from './components/StageDistill'
 import StageCrystallize from './components/StageCrystallize'
 import OutputCard from './components/OutputCard'
-
-const STAGE_LABELS = {
-  refracting:    { text: 'Refracting...', color: 'var(--c-refract)' },
-  distilling:    { text: 'Distilling...', color: 'var(--c-distill)' },
-  crystallizing: { text: 'Crystallizing...', color: 'var(--c-crystallize)' },
-}
+import InstallBanner from './components/InstallBanner'
+import OfflineIndicator from './components/OfflineIndicator'
+import UpdateToast from './components/UpdateToast'
+import AuthSheet from './components/AuthSheet'
+import LibraryScreen from './components/LibraryScreen'
+import LandingPage from './pages/LandingPage'
+import SharedPrismPage from './pages/SharedPrismPage'
+import AuthCallback from './pages/AuthCallback'
 
 export default function App() {
-  const [isDual, setIsDual] = useState(false)
+  const { user, isLoading: authLoading } = useAuth()
+  const { theme, toggleTheme, isDark } = useTheme()
+  const [authSheetOpen, setAuthSheetOpen] = useState(false)
+  const [authReason, setAuthReason] = useState('')
+  const [libraryOpen, setLibraryOpen] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const prismA = usePrism()
   const prismB = usePrism()
-  
-  const { decodeState } = useShare()
-  const { theme, toggleTheme, isDark } = useTheme()
+  const [isDual, setIsDual] = useState(false)
 
   const isProcessing = [prismA, prismB].some(p => 
     ['refracting', 'distilling', 'crystallizing'].includes(p.status)
   )
 
   const isIdle = prismA.status === 'idle' && (isDual ? prismB.status === 'idle' : true)
-
-  // URL Hydration
-  useEffect(() => {
-    const sharedData = decodeState()
-    if (sharedData) {
-      prismA.hydrate(sharedData)
-    }
-  }, [])
 
   const handleReset = () => {
     prismA.reset()
@@ -45,8 +45,13 @@ export default function App() {
   const handleRemix = (signal) => {
     prismA.reset()
     prismB.reset()
-    setIsDual(false) // Remixing always goes back to single mode for refinement
+    setIsDual(false)
     prismA.setInput(signal)
+  }
+
+  const triggerAuth = (reason) => {
+    setAuthReason(reason)
+    setAuthSheetOpen(true)
   }
 
   const renderResults = (prism, id) => (
@@ -54,9 +59,9 @@ export default function App() {
       {/* Stage 1 — Refract */}
       {(prism.perspectives || prism.status === 'refracting') && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <StageRefract
             input={prism.input}
@@ -69,9 +74,9 @@ export default function App() {
       {/* Stage 2 — Distill */}
       {(prism.signal || prism.status === 'distilling') && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <StageDistill
             signal={prism.signal}
@@ -83,9 +88,9 @@ export default function App() {
       {/* Stage 3 — Crystallize */}
       {(prism.brief || prism.status === 'crystallizing') && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <StageCrystallize
             brief={prism.brief}
@@ -103,6 +108,7 @@ export default function App() {
           brief={prism.brief}
           onReset={handleReset}
           onRemix={handleRemix}
+          onAuthRequired={triggerAuth}
         />
       )}
 
@@ -117,70 +123,127 @@ export default function App() {
     </div>
   )
 
+  if (authLoading) {
+    return (
+      <div className="auth-loading-screen">
+        <motion.div 
+            animate={{ opacity: [0.4, 1, 0.4] }} 
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="loading-prism"
+        >
+            PRISM
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
     <div className={`app theme-${theme}`}>
-      {/* Global Top Bar */}
-      <div className="top-bar">
-        <div className="top-bar-left">
-          <span className="wordmark-sm">PRISM</span>
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle Theme">
-            {isDark ? '○' : '●'}
-          </button>
-        </div>
+      <OfflineIndicator />
+      <UpdateToast />
 
-        {!isIdle && (
-          <div className="top-bar-right">
-            {isProcessing && (
-              <motion.div className="processing-indicator">
-                <span className="processing-dot" />
-                <span className="processing-text">Crystallizing Thinking...</span>
-              </motion.div>
-            )}
-            {!isProcessing && (
-              <button className="back-btn" onClick={handleReset}>← New</button>
-            )}
-          </div>
-        )}
-      </div>
+      <Routes>
+        <Route path="/" element={
+          !user ? (
+            <LandingPage onSignIn={() => triggerAuth('Sign in to start refracting your ideas.')} />
+          ) : (
+            <>
+              <div className="top-bar">
+                <div className="top-bar-left">
+                  <span className="wordmark-sm">PRISM</span>
+                  <button className="theme-toggle" onClick={toggleTheme}>
+                    {isDark ? '○' : '●'}
+                  </button>
+                  <button className="library-toggle" onClick={() => setLibraryOpen(true)}>
+                    Library ◈
+                  </button>
+                </div>
 
-      <AnimatePresence mode="wait">
-        {isIdle ? (
-          <InputScreen 
-            key="input" 
-            isDual={isDual}
-            onToggleDual={() => setIsDual(!isDual)}
-            onRun={(valA, valB, lenses) => {
-              prismA.run(valA, lenses)
-              if (isDual) prismB.run(valB, lenses)
-            }} 
-            history={prismA.history}
-            onHydrate={prismA.hydrate}
-            activeLenses={prismA.activeLenses}
-            onSelectLenses={prismA.setActiveLenses}
-            initialInputA={prismA.input}
-          />
-        ) : (
-          <motion.div
-            key="results"
-            className={`results-layout ${isDual ? 'comparison-mode' : ''}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {renderResults(prismA, 'prism-results-left')}
-            {isDual && renderResults(prismB, 'prism-results-right')}
-          </motion.div>
+                {!isIdle && (
+                  <div className="top-bar-right">
+                    {isProcessing && (
+                      <motion.div className="processing-indicator">
+                        <span className="processing-dot" />
+                        <span className="processing-text">Crystallizing Thinking...</span>
+                      </motion.div>
+                    )}
+                    {!isProcessing && (
+                      <button className="back-btn" onClick={handleReset}>← New</button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <AnimatePresence mode="wait">
+                {isIdle ? (
+                  <InputScreen 
+                    key="input" 
+                    isDual={isDual}
+                    onToggleDual={() => setIsDual(!isDual)}
+                    onRun={(vA, vB, lenses) => {
+                      prismA.run(vA, lenses)
+                      if (isDual) prismB.run(vB, lenses)
+                    }} 
+                    history={prismA.history}
+                    onHydrate={prismA.hydrate}
+                    activeLenses={prismA.activeLenses}
+                    onSelectLenses={prismA.setActiveLenses}
+                    initialInputA={prismA.input}
+                  />
+                ) : (
+                  <motion.div
+                    key="results"
+                    className={`results-layout ${isDual ? 'comparison-mode' : ''}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {renderResults(prismA, 'prism-results-left')}
+                    {isDual && renderResults(prismB, 'prism-results-right')}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )
+        } />
+        
+        <Route path="/p/:token" element={<SharedPrismPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+      </Routes>
+
+
+      <AuthSheet 
+        isOpen={authSheetOpen} 
+        onClose={() => setAuthSheetOpen(false)} 
+        reason={authReason}
+      />
+
+      <AnimatePresence>
+        {libraryOpen && (
+          <LibraryScreen onClose={() => setLibraryOpen(false)} />
         )}
       </AnimatePresence>
 
+      <InstallBanner />
+
       <style>{`
-        .app {
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
+        .auth-loading-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a08;
+            color: var(--c-text-muted);
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            letter-spacing: 0.3em;
         }
 
-        .results-layout {
+        .loading-prism {
+            text-shadow: 0 0 20px rgba(200, 169, 110, 0.3);
+        }
+
+        .app {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -206,22 +269,32 @@ export default function App() {
           gap: var(--space-4);
         }
 
-        .theme-toggle {
+        .theme-toggle, .library-toggle {
           background: transparent;
           border: none;
           color: var(--c-text-muted);
-          font-size: 0.9rem;
+          font-family: var(--font-mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
           cursor: pointer;
-          padding: var(--space-1);
+          padding: var(--space-1) var(--space-2);
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: color 0.2s, transform 0.2s;
+          transition: all 0.2s;
         }
 
-        .theme-toggle:hover {
+        .theme-toggle:hover, .library-toggle:hover {
           color: var(--c-accent);
-          transform: scale(1.1);
+          transform: translateY(-1px);
+        }
+
+        .library-toggle {
+            border: 1px solid var(--c-border);
+            border-radius: 20px;
+            padding: 2px var(--space-3);
+            margin-left: var(--space-2);
         }
 
         .wordmark-sm {
@@ -230,31 +303,6 @@ export default function App() {
           font-weight: 300;
           letter-spacing: 0.3em;
           color: var(--c-text-muted);
-        }
-
-        .processing-indicator {
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-        }
-
-        .processing-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          animation: throb 1.2s ease-in-out infinite;
-        }
-
-        @keyframes throb {
-          0%, 100% { opacity: 0.4; transform: scale(0.85); }
-          50% { opacity: 1; transform: scale(1.15); }
-        }
-
-        .processing-text {
-          font-family: var(--font-mono);
-          font-size: 0.65rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
         }
 
         .back-btn {
@@ -320,6 +368,33 @@ export default function App() {
           }
         }
 
+        .processing-indicator {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+        }
+
+        .processing-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          animation: throb 1.2s ease-in-out infinite;
+          background: var(--c-accent);
+        }
+
+        @keyframes throb {
+          0%, 100% { opacity: 0.4; transform: scale(0.85); }
+          50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        .processing-text {
+          font-family: var(--font-mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: var(--c-text-muted);
+        }
+
         .error-block {
           max-width: var(--max-w);
           margin: 0 auto;
@@ -348,13 +423,7 @@ export default function App() {
           line-height: 1.5;
         }
 
-        .error-actions {
-          display: flex;
-          gap: var(--space-3);
-          margin-top: var(--space-2);
-        }
-
-        .retry-btn, .reset-btn-err {
+        .retry-btn {
           padding: var(--space-3) var(--space-4);
           font-family: var(--font-mono);
           font-size: 0.65rem;
@@ -363,28 +432,11 @@ export default function App() {
           border-radius: var(--radius);
           cursor: pointer;
           transition: all 0.2s;
-        }
-
-        .retry-btn {
-          background: transparent;
           border: 1px solid var(--c-accent);
+          background: transparent;
           color: var(--c-accent);
         }
 
-        .retry-btn:hover {
-          background: var(--c-accent-dim);
-        }
-
-        .reset-btn-err {
-          background: transparent;
-          border: 1px solid var(--c-border-light);
-          color: var(--c-text-muted);
-        }
-
-        .reset-btn-err:hover {
-          border-color: var(--c-text-muted);
-          color: var(--c-text);
-        }
       `}</style>
     </div>
   )
